@@ -1,0 +1,17 @@
+BIN = proto-go-course.exe
+
+build: 	generate
+	go build -o ${BIN} .
+
+generate:
+	protoc --go_opt=module=example.com/example/proto --go_out=./example/proto example/proto_file/*.proto
+	protoc --go_opt=module=example.com/example/proto --go_out=./example/proto --go-grpc_out=./example/proto --go-grpc_opt=module=example.com/example/proto example/proto_file/*.proto
+
+bump: generate
+	go get -u ./...
+
+clean:
+	rm ${PROTO_DIR}/*.pb.go
+	rm ${BIN}
+
+	
