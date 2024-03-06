@@ -61,6 +61,44 @@ func Avg(cc pb.CaculateSumClient, arrs []int32) {
 	fmt.Println("Avg ", arrs, " ", res.N)
 }
 
+func Max(cc pb.CaculateSumClient, arrs []int32) {
+	stream, err := cc.Max(context.Background())
+	if err != nil {
+		log.Fatalln("Error: ", err)
+	}
+
+	go func() {
+		for _, i := range arrs {
+			err := stream.Send(&pb.PrimesRequest{N: i})
+			if err != nil {
+				log.Fatalln("Error when sendding message: ", err)
+			}
+		}
+		stream.CloseSend()
+	}()
+
+	c := make(chan (byte))
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				close(c)
+				break
+			}
+
+			if err != nil {
+				log.Fatalln("Error when sendding message: ", err)
+			}
+
+			fmt.Println(res.N)
+		}
+	}()
+
+	<-c
+
+}
+
 func main() {
 	addr := "localhost:5000"
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -75,4 +113,5 @@ func main() {
 	SumArr(cc, []int32{1, 2, 3, 4, 5})
 	Primes(cc, 120)
 	Avg(cc, []int32{1, 2, 3, 4, 5, 1})
+	Max(cc, []int32{3, 14, 123, 12, 41, 23, 142})
 }

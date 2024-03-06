@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
 
 	pb "example.com/example/proto"
@@ -64,6 +65,29 @@ func (Server) Avg(stream pb.CaculateSum_AvgServer) error {
 		}
 		sum += float32(res.N)
 		n++
+	}
+	return nil
+}
+
+func (Server) Max(stream pb.CaculateSum_MaxServer) error {
+	log.Println("Recived request Max")
+	var max int32 = math.MinInt32
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			log.Fatalln("Error: ", err)
+			return err
+		}
+
+		if req.N > max {
+			stream.Send(&pb.PrimesResponse{N: req.N})
+			max = req.N
+		}
+
 	}
 	return nil
 }
